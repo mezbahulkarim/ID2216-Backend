@@ -1,2 +1,4 @@
 venv_backend
 __pycache__
+fast.py
+.env
