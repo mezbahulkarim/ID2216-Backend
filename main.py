@@ -23,7 +23,7 @@ def root():
 def get_fields():
     fields = supabase.table('Test').select('id').like('Name', 'L').execute()
     fields = fields.json()
-    #print(type(fields))
+    print(type(fields))
     return fields
 
 @app.post("/send_data")
