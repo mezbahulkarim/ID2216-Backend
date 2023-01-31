@@ -5,6 +5,7 @@ import os
 from pydantic import BaseModel
 from dotenv import load_dotenv
 import jwt 
+from passlib.hash import bcrypt
 
 load_dotenv()
 app = FastAPI()
@@ -28,7 +29,6 @@ async def create_user(User: User):
 
     user_entry = supabase.table('User').insert({"username":User.username, "password": User.password}).execute()
     return "User Created: "+ User.username
-
 
 
 @app.post('/token')
@@ -57,10 +57,8 @@ async def get_user(token: str = Depends(oauth2_scheme)):
     return user_obj
 
 @app.get('/mytoken')
-async def get_my_token(user: User = Depends(get_user)): #depend on get_user for all user auth endpoints 
+async def get_current_active_user(user: User = Depends(get_user)): #depend on get_user for all user auth endpoints 
     return user
-
-
 
 
 
