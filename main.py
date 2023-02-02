@@ -2,12 +2,17 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, Depends, HTTPException, status
 from supabase import create_client
 import os
-from pydantic import BaseModel
+
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from supabase import create_client
 import jwt 
 from passlib.hash import bcrypt
+from schemas import *
+import models
+from database import SessionLocal
+from typing import List
 
+db = SessionLocal()
 
 load_dotenv()
 app = FastAPI()
@@ -18,11 +23,6 @@ JWT_SECRET = os.environ.get("JWT_SECRET")
 
 supabase= create_client(url, key)
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl='token') 
-
-class User(BaseModel):
-    username: str
-    password: str
-    email: str
 
 async def fetch_user(token: str = Depends(oauth2_scheme)):
     try:
@@ -40,6 +40,13 @@ async def fetch_user(token: str = Depends(oauth2_scheme)):
 @app.get("/")
 def root():
     return "At root, no Path Specified"
+#---------------------------------------------------------------------------------------------------------------------------------------------------------
+
+#---------------------------------------------------------------------------------------------------------------------------------------------------------
+@app.get("/getallusers", response_model= List[User])
+def get_all_users():
+    users=db.query(models.User).all()
+    return users
 #---------------------------------------------------------------------------------------------------------------------------------------------------------
 
 #---------------------------------------------------------------------------------------------------------------------------------------------------------
