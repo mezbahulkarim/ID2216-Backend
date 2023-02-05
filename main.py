@@ -1,5 +1,6 @@
 from dotenv import load_dotenv
 from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi.middleware.cors import CORSMiddleware
 from supabase import create_client
 import os
 
@@ -20,6 +21,20 @@ app = FastAPI()
 url = os.environ.get("SUPABASE_URL")
 key = os.environ.get("SUPABASE_KEY")
 JWT_SECRET = os.environ.get("JWT_SECRET")
+
+origins = [
+    "http://localhost:2780",
+    "http://localhost",
+    "https://universal-tracker-web.vercel.app",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 supabase= create_client(url, key)
