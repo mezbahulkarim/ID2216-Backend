@@ -8,3 +8,4 @@ passlib
 bcrypt
 SQLAlchemy
 beautifulsoup4
+psycopg2
