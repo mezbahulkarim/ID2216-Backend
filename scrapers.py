@@ -5,9 +5,11 @@ from urllib.request import urlopen, Request
 # beautifulsoup4
 # urllib
 
+#add game id to detail?
 
 def search_movie(value: str):
     url = f"https://www.themoviedb.org/search/movie?query={value}"
+    #url = url.replace(" ", "%20")  #//can do this but maybe too manual
     req = Request(url, headers={'User-Agent': 'Mozilla/5.0'})
     webpage = urlopen(req).read()
     page_soup = BeautifulSoup(webpage, "html.parser")
@@ -218,7 +220,7 @@ def detail_book(link: str):
     final = {}
     
     title = page_soup.find('h1').text.strip()
-    autor = page_soup.find('span', class_="ContributorLink__name").text.strip()
+    author = page_soup.find('span', class_="ContributorLink__name").text.strip()
     image_url = page_soup.find('img', class_="ResponsiveImage")['src']
     description = page_soup.find('div', class_="DetailsLayoutRightParagraph").text.strip()
     publication_info = page_soup.find('div', class_="FeaturedDetails").find_all('p')[1].text.strip()
@@ -239,7 +241,7 @@ def detail_book(link: str):
     
     
     final['title'] = title
-    final['autor'] = autor
+    final['author'] = author
     final['image_url'] = image_url
     final['description'] = description
     final['publication_info'] = publication_info

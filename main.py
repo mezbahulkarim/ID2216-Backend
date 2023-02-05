@@ -11,6 +11,7 @@ from schemas import *
 import models
 from database import SessionLocal
 from typing import List
+from scrapers import *
 
 db = SessionLocal()
 
@@ -162,3 +163,43 @@ async def change_password(password: str, user:User = Depends(fetch_user)):
 #---------------------------------------------------------------------------------------------------------------------------------------------------------
 
 #Scraper Endpoints
+
+#TESTING STUFF
+@app.get('/get_article')
+async def get_article():
+    
+    searched: Book_Detail = detail_book('https://www.goodreads.com//book/show/61439040-1984?from_search=true&from_srp=true&qid=9aYrPGLjgk&rank=1')
+    return searched
+
+    # searched: Movie_Detail = detail_movie('https://www.themoviedb.org/movie/77')
+    # return searched
+
+
+@app.get('/getallbooks')    #works
+async def get_all_books():
+
+    books=db.query(models.Books).all()
+    return books
+
+@app.get('/insertbook')     #works
+async def insert_book():
+
+    record = models.Books(
+        id = "Ok Testing",
+        title = "Testing Insert",
+        genres = [
+    "Classics",
+    "Fiction",
+    "Science Fiction",
+    "Dystopia",
+    "Literature",
+    "Novels"
+    ]
+    )
+
+    db.add(record)
+    db.commit()
+
+
+    return "Done"
+#TESTING STUFF

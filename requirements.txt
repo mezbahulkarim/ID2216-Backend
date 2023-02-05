@@ -7,3 +7,4 @@ PyJWT
 passlib
 bcrypt
 SQLAlchemy
+beautifulsoup4
