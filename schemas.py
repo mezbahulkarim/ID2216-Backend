@@ -8,6 +8,7 @@ class User(BaseModel):
     class Config:
         orm_mode = True
 
+
 class Movie_Search(BaseModel):
     title: str
     image_url: str
@@ -44,6 +45,7 @@ class Game_Search(BaseModel):
     class Config:
         orm_mode = True
 
+
 class Game_Detail(BaseModel):
     title: str
     image_url: str
@@ -57,6 +59,7 @@ class Game_Detail(BaseModel):
     class Config:
         orm_mode = True
 
+
 class Book_Search(BaseModel):
     title: str
     image_url: str
@@ -65,6 +68,7 @@ class Book_Search(BaseModel):
 
     class Config:
         orm_mode = True
+
 
 class Book_Detail(BaseModel):
     title: str

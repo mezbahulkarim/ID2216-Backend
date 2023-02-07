@@ -13,6 +13,8 @@ import models
 from database import SessionLocal
 from typing import List
 from scrapers import *
+import json
+import asyncio
 
 db = SessionLocal()
 
@@ -35,7 +37,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 
 supabase= create_client(url, key)
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl='token') 
@@ -178,43 +179,69 @@ async def change_password(password: str, user:User = Depends(fetch_user)):
 #---------------------------------------------------------------------------------------------------------------------------------------------------------
 
 #Scraper Endpoints
-
-#TESTING STUFF
-@app.get('/get_article')
-async def get_article():
-    
-    searched: Book_Detail = detail_book('https://www.goodreads.com//book/show/61439040-1984?from_search=true&from_srp=true&qid=9aYrPGLjgk&rank=1')
-    return searched
-
-    # searched: Movie_Detail = detail_movie('https://www.themoviedb.org/movie/77')
-    # return searched
+@app.post('/search_movie')
+async def movie_search(search: str, user:User= Depends(fetch_user)):
+    try:
+        return search_movie(search)
+    except:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+        detail="FAIL, error searching for movie")
 
 
-@app.get('/getallbooks')    #works
-async def get_all_books():
-
-    books=db.query(models.Books).all()
-    return books
-
-@app.get('/insertbook')     #works
-async def insert_book():
-
-    record = models.Books(
-        id = "Ok Testing",
-        title = "Testing Insert",
-        genres = [
-    "Classics",
-    "Fiction",
-    "Science Fiction",
-    "Dystopia",
-    "Literature",
-    "Novels"
-    ]
-    )
-
-    db.add(record)
-    db.commit()
+@app.post('/search_book')
+async def book_search(search: str, user:User = Depends(fetch_user)):
+    try:
+        return search_book(search)
+    except:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+        detail="FAIL, error searching for book")
 
 
-    return "Done"
-#TESTING STUFF
+@app.post('/search_game')
+async def game_search(search: str, user:User = Depends(fetch_user)):
+    try:
+        return search_game(search)
+    except:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+        detail="FAIL, error searching for game")
+
+
+@app.post('/detail_movie', )
+async def movie_detail(search: str, user:User = Depends(fetch_user)):
+    try:
+        coroutine = asyncio.create_task(detail_movie(search))
+        await coroutine
+        return_val = coroutine.result()
+        # movie: Movie_Detail = return_val
+        # return movie
+        return return_val
+    except:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+        detail="FAIL, error getting movie details")
+
+@app.post('/detail_game')
+async def game_detail(search: str, user:User = Depends(fetch_user)):
+    try:
+        return_val = detail_game(search)
+        # game: Game_Detail = return_val
+        # return game
+        return return_val
+    except:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+        detail="FAIL, error getting game details")
+    #NOTES for game_detail- randomly getting this error sometimes, POSSIBLY FOR 18+ GAMES:
+    # title = page_soup.find('div', class_="apphub_AppName").text.strip()
+    # AttributeError: 'NoneType' object has no attribute 'text'
+
+@app.post('/detail_book')
+async def book_detail(search: str, user:User = Depends(fetch_user)):
+    try:
+        return_val = detail_book(search)
+        # book: Book_Detail = return_val
+        # return book
+        return return_val
+    except:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+        detail="FAIL, error getting book details")
+
+

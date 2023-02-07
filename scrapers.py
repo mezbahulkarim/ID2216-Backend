@@ -5,11 +5,11 @@ from urllib.request import urlopen, Request
 # beautifulsoup4
 # urllib
 
-#add game id to detail?
 
 def search_movie(value: str):
     url = f"https://www.themoviedb.org/search/movie?query={value}"
-    #url = url.replace(" ", "%20")  #//can do this but maybe too manual
+    url=" ".join(url.split())
+    url= url.replace(' ', '%20')
     req = Request(url, headers={'User-Agent': 'Mozilla/5.0'})
     webpage = urlopen(req).read()
     page_soup = BeautifulSoup(webpage, "html.parser")
@@ -45,7 +45,7 @@ def search_movie(value: str):
     return all_movies
 
 
-def detail_movie(link: str):
+async def detail_movie(link: str):
     req = Request(link, headers={'User-Agent': 'Mozilla/5.0'})
     webpage = urlopen(req).read()
     page_soup = BeautifulSoup(webpage, "html.parser")
@@ -112,6 +112,8 @@ def detail_movie(link: str):
 
 def search_game(value: str):
     url = f"https://store.steampowered.com/search/?term={value}&ndl=1"
+    url=" ".join(url.split())
+    url= url.replace(' ', '%20')
     req = Request(url, headers={'User-Agent': 'Mozilla/5.0'})
     webpage = urlopen(req).read()
     page_soup = BeautifulSoup(webpage, "html.parser")
@@ -186,6 +188,8 @@ def detail_game(link: str):
 
 def search_book(value: str):
     url = f"https://www.goodreads.com/search?q={value}&qid="
+    url=" ".join(url.split())
+    url= url.replace(' ', '%20')
     req = Request(url, headers={'User-Agent': 'Mozilla/5.0'})
     webpage = urlopen(req).read()
     page_soup = BeautifulSoup(webpage, "html.parser")

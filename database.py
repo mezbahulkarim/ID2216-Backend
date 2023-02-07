@@ -2,17 +2,6 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 from sqlalchemy import create_engine
 import os
 from dotenv import load_dotenv
-from sqlalchemy import URL
-
-#user=postgres password=[YOUR-PASSWORD] host=db.dtohwsymdfnwstwyburf.supabase.co port=5432 database=postgres
-
-# url_object = URL.create(
-#     "postgresql",
-#     username="postgres",
-#     password=passwd,
-#     host="db.dtohwsymdfnwstwyburf.supabase.co",
-#     database="postgres"
-# )
 
 #postgres://postgres:[YOUR-PASSWORD]@db.dtohwsymdfnwstwyburf.supabase.co:6543/postgres  //Using This
 
