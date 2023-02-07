@@ -31,16 +31,16 @@ print(detail_game("https://store.steampowered.com/app/692890/Roboquest/?snr=1_7_
 # async def insert_book():
 
 #     record = models.Books(
-#         id = "Ok Testing",
-#         title = "Testing Insert",
-#         genres = [
-#     "Classics",
-#     "Fiction",
-#     "Science Fiction",
-#     "Dystopia",
-#     "Literature",
-#     "Novels"
-#     ]
+    #     id = "Ok Testing",
+    #     title = "Testing Insert",
+    #     genres = [
+    # "Classics",
+    # "Fiction",
+    # "Science Fiction",
+    # "Dystopia",
+    # "Literature",
+    # "Novels"
+    # ]
 #     )
 
 #     db.add(record)

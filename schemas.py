@@ -55,6 +55,7 @@ class Game_Detail(BaseModel):
     publisher: str
     genres: list
     link: str
+    #game_id: int
 
     class Config:
         orm_mode = True
@@ -84,3 +85,21 @@ class Book_Detail(BaseModel):
     class Config:
         orm_mode = True
     
+
+class Wishlist(BaseModel):
+    #wishlist_id: int
+    media_id: str
+    media_type: str
+    username: str
+
+    class Config:
+        orm_mode = True
+
+class Library(BaseModel):
+    #wishlist_id: int
+    media_id: str
+    media_type: str
+    username: str
+
+    class Config:
+        orm_mode = True

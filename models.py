@@ -1,5 +1,5 @@
 from database import Base
-from sqlalchemy import String, Boolean, Integer, Column, ARRAY, JSON
+from sqlalchemy import String, Boolean, Integer, Column, ARRAY, JSON, ForeignKey
 
 class User(Base):
     __tablename__ = "Users"
@@ -36,7 +36,7 @@ class Games(Base):
     publisher = Column(String)
     genres = Column(ARRAY(String))
     link = Column(String, primary_key = True)
-
+    game_id = Column(Integer, primary_key=True)
 
 class Books(Base):
     __tablename__ = "Books"
@@ -50,3 +50,21 @@ class Books(Base):
     pages = Column(String)
     link = Column(String, unique = True)
     id = Column(String, primary_key = True)
+
+
+class Wishlist(Base):
+    __tablename__ = "Wishlist"
+
+    wishlist_id = Column(Integer, primary_key=True)
+    media_id = Column(String)
+    media_type = Column(String)
+    username = Column(String)
+
+
+class Library(Base):
+    __tablename__ = "Library"
+
+    library_id = Column(Integer, primary_key=True)
+    media_id = Column(String)
+    media_type = Column(String)
+    username = Column(String)
