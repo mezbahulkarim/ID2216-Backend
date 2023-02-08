@@ -454,9 +454,9 @@ async def library_add_game(game: Game_Detail, user:User = Depends(fetch_user)):
 async def wishlist_get_my_books(user:User = Depends(fetch_user)):
     try:
         records = db.query(models.Books).filter(
-            models.Books.id==models.Wishlist.media_id,      #don't need foreign key relations
+            models.Books.id==models.Wishlist.media_id,      #don't need explicit foreign key relations
             models.Wishlist.username == user.username,      #does adding more parameters reduce complexity? :Hmmm
-            models.Library.media_type=="Book").all()
+            models.Wishlist.media_type=="Book").all()       #don't need this
     except:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
         detail = "Error when retrieving user's wishlist books")
@@ -531,3 +531,90 @@ async def library_get_my_games(user:User = Depends(fetch_user)):
         detail = "Error when retrieving all library books")
     
     return records
+
+
+@app.post('/delete_wishlist_item')
+async def delete_wishlist_item(item_id:str, user:User= Depends(fetch_user)):
+    try:
+        db.query(models.Wishlist).filter(models.Wishlist.media_id == item_id,
+                                        models.Wishlist.username == user.username,).delete()
+        db.commit()
+
+    except:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+        detail="Error when deleting wishlist item")
+
+    return {"detail": "OK, Successfully Deleted Wishlist Item"}
+
+
+@app.post('/delete_library_item')
+async def delete_library_item(item_id:str, user:User= Depends(fetch_user)):
+    try:
+        db.query(models.Library).filter(models.Library.media_id == item_id,
+                                        models.Library.username == user.username,).delete()
+        db.commit()
+
+    except:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+        detail="Error when deleting library item")
+
+    return {"detail": "OK, Successfully Deleted Library Item"}
+                                
+
+@app.post('/move_item_wishlist_to_library')
+async def move_wishlist_library(item_id: str, user:User= Depends(fetch_user)):
+    
+    if db.query(models.Library).filter(models.Library.media_id == item_id, models.Library.username == user.username).first():
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,
+        detail="Item already exists in Library")
+
+    try:
+
+        record: Wishlist = db.query(models.Wishlist).filter(models.Wishlist.media_id == item_id,
+                            models.Wishlist.username == user.username).first()
+
+        library_record = models.Library(
+            media_id = record.media_id,
+            media_type = record.media_type,
+            username = record.username   
+        )
+
+        db.add(library_record)
+        db.commit()
+
+        await delete_wishlist_item(item_id, user)
+
+    except:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+        detail="Error when moving wishlist item to library")
+
+    return {"detail": "OK, Successfully Moved Wishlist Item to Library"}
+
+
+@app.post('/move_item_library_to_wishlist')
+async def move_library_wishlist(item_id: str, user:User= Depends(fetch_user)):
+    
+    if db.query(models.Wishlist).filter(models.Wishlist.media_id == item_id, models.Wishlist.username == user.username).first():
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,
+        detail="Item already exists in Wishlist")
+
+    try:
+        record: Library = db.query(models.Library).filter(models.Library.media_id == item_id,
+                            models.Library.username == user.username).first()
+
+        wishlist_record = models.Wishlist(
+            media_id = record.media_id,
+            media_type = record.media_type,
+            username = record.username   
+        )
+
+        db.add(wishlist_record)
+        db.commit()
+
+        await delete_library_item(item_id, user)
+
+    except:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+        detail="Error when moving library item to wishlist")
+
+    return {"detail": "OK, Successfully Moved Library Item to Wishlist"}
