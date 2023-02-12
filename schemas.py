@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import Optional
 
 class User(BaseModel):
     username: str
@@ -21,7 +22,7 @@ class Movie_Search(BaseModel):
 
 class Movie_Detail(BaseModel):
     title: str
-    release_date : str
+    release_date: str
     image_url: str
     genre: str
     length: str
@@ -55,7 +56,7 @@ class Game_Detail(BaseModel):
     publisher: str
     genres: list
     link: str
-    #game_id: int
+    # game_id: int
 
     class Config:
         orm_mode = True
@@ -84,10 +85,10 @@ class Book_Detail(BaseModel):
 
     class Config:
         orm_mode = True
-    
+
 
 class Wishlist(BaseModel):
-    #wishlist_id: int
+    # wishlist_id: int
     media_id: str
     media_type: str
     username: str
@@ -95,11 +96,46 @@ class Wishlist(BaseModel):
     class Config:
         orm_mode = True
 
+
 class Library(BaseModel):
-    #wishlist_id: int
+    # wishlist_id: int
     media_id: str
     media_type: str
     username: str
+
+    class Config:
+        orm_mode = True
+
+
+class Progress_Books(BaseModel):
+
+    media_id: str
+    hours_read: Optional[str] = None
+    rating: Optional[str] = None
+    notes: Optional[str] = None
+    pages_read: Optional[str] = None
+
+    class Config:
+        orm_mode = True
+
+
+class Progress_Games(BaseModel):
+
+    media_id: str
+    hours_played: Optional[str] = None
+    rating: Optional[str] = None
+    notes: Optional[str] = None
+
+    class Config:
+        orm_mode = True
+
+
+class Progress_Movies(BaseModel):
+
+    media_id: str
+    hours_watched: Optional[str] = None
+    rating: Optional[str] = None
+    notes: Optional[str] = None
 
     class Config:
         orm_mode = True

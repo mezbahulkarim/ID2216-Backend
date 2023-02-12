@@ -1,13 +1,14 @@
 from database import Base
 from sqlalchemy import String, Boolean, Integer, Column, ARRAY, JSON, ForeignKey
 
+
 class User(Base):
     __tablename__ = "Users"
-    
-    username=Column(String, primary_key=True, index=True)
-    email=Column(String, unique=True, index=True)
-    password=Column(String)
-    
+
+    username = Column(String, primary_key=True, index=True)
+    email = Column(String, unique=True, index=True)
+    password = Column(String)
+
 
 class Movies(Base):
     __tablename__ = "Movies"
@@ -21,8 +22,8 @@ class Movies(Base):
     actors = Column(JSON)
     director = Column(String)
     screenplay = Column(String)
-    link = Column(String, unique = True)
-    id = Column(String, primary_key = True)
+    link = Column(String, unique=True)
+    id = Column(String, primary_key=True)
 
 
 class Games(Base):
@@ -35,8 +36,9 @@ class Games(Base):
     developer = Column(String)
     publisher = Column(String)
     genres = Column(ARRAY(String))
-    link = Column(String, primary_key = True)
+    link = Column(String, primary_key=True)
     game_id = Column(Integer, primary_key=True)
+
 
 class Books(Base):
     __tablename__ = "Books"
@@ -48,8 +50,8 @@ class Books(Base):
     publication_info = Column(String)
     genres = Column(ARRAY(String))
     pages = Column(String)
-    link = Column(String, unique = True)
-    id = Column(String, primary_key = True)
+    link = Column(String, unique=True)
+    id = Column(String, primary_key=True)
 
 
 class Wishlist(Base):
@@ -67,4 +69,38 @@ class Library(Base):
     library_id = Column(Integer, primary_key=True)
     media_id = Column(String)
     media_type = Column(String)
+    username = Column(String)
+
+
+class Progress_Books(Base):
+    __tablename__ = "Progress_Books"
+
+    id = Column(Integer, primary_key=True)
+    media_id = Column(String)
+    hours_read = Column(String)
+    rating = Column(String)
+    notes = Column(String)
+    pages_read = Column(String)
+    username = Column(String)
+
+
+class Progress_Games(Base):
+    __tablename__ = "Progress_Games"
+
+    id = Column(Integer, primary_key=True)
+    media_id = Column(String)
+    hours_played = Column(String)
+    rating = Column(String)
+    notes = Column(String)
+    username = Column(String)
+
+
+class Progress_Movies(Base):
+    __tablename__ = "Progress_Movies"
+
+    id = Column(Integer, primary_key=True)
+    media_id = Column(String)
+    hours_watched = Column(String)
+    rating = Column(String)
+    notes = Column(String)
     username = Column(String)
