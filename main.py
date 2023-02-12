@@ -658,7 +658,7 @@ async def update_progress_books(progress_books_record: Progress_Books,  user: Us
             insert_record = models.Progress_Books(
                 media_id=progress_books_record.media_id,
                 hours_read="0",
-                rating="Unrated",
+                rating="0",
                 notes="",
                 pages_read="0",
                 username=user.username
@@ -702,7 +702,7 @@ async def update_progress_games(progress_games_record: Progress_Games,  user: Us
             insert_record = models.Progress_Games(
                 media_id=progress_games_record.media_id,
                 hours_played="0",
-                rating="Unrated",
+                rating="0",
                 notes="",
                 username=user.username
             )
@@ -745,7 +745,7 @@ async def update_progress_movies(progress_movies_record: Progress_Movies,  user:
             insert_record = models.Progress_Movies(
                 media_id=progress_movies_record.media_id,
                 hours_watched="0",
-                rating="Unrated",
+                rating="0",
                 notes="",
                 username=user.username
             )
@@ -759,3 +759,78 @@ async def update_progress_movies(progress_movies_record: Progress_Movies,  user:
     except:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                             detail="Error when moving updating Progress_Movies table")
+
+
+#Get Attributes from Progress Table Endpoints
+@app.get('/hours_spent')
+def hours_spent(user: User = Depends(fetch_user)):
+    try:
+        hours_read =0
+        hours_played =0
+        hours_watched =0
+
+        for record in db.query(models.Progress_Books).filter(models.Progress_Books.username == user.username):
+            hours_read += float(record.hours_read)
+
+
+        for record in db.query(models.Progress_Games).filter(models.Progress_Games.username == user.username):
+            hours_played += float(record.hours_played)
+
+        
+        for record in db.query(models.Progress_Movies).filter(models.Progress_Movies.username == user.username):
+            hours_watched += float(record.hours_watched)
+
+        total_hours = str(hours_watched + hours_played + hours_read)
+
+        hours_read = str(hours_read)
+        hours_played = str(hours_played)
+        hours_watched = str(hours_watched) 
+
+        return {"hours_read": hours_read, "hours_played": hours_played, "hours_watched": hours_watched, "total_hours": total_hours}
+    
+    except:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail="Error when fetching hours spent for user")
+
+
+
+@app.get('/ratings')
+def ratings(user: User = Depends(fetch_user)):
+    try:
+        rating_books =0
+        rating_games =0
+        rating_movies =0
+       
+        i =0
+        for record in db.query(models.Progress_Books).filter(models.Progress_Books.username == user.username):
+            rating_books += float(record.rating)
+            i=i+1
+        rating_books = float(rating_books/i)
+        rating_books = float(format(rating_books, '.2f'))
+
+        j =0
+        for record in db.query(models.Progress_Games).filter(models.Progress_Games.username == user.username):
+            rating_games += float(record.rating)
+            j=j+1
+        rating_games =+ float(rating_games/j) #format(math.pi, '.2f')
+        rating_games = float(format(rating_games, '.2f'))
+        
+        k=0
+        for record in db.query(models.Progress_Movies).filter(models.Progress_Movies.username == user.username):
+            rating_movies += float(record.rating)
+            k=k+1
+        rating_movies = float(rating_movies/k)
+        rating_movies = float(format(rating_movies, '.2f'))
+
+        total_ratings = float((rating_movies + rating_games + rating_books)/3)
+        total_ratings = format(total_ratings, '.2f')
+
+        rating_books = str(rating_books)
+        rating_games = str(rating_games)
+        rating_movies = str(rating_movies) 
+
+        return {"rating_books": rating_books, "rating_games": rating_games, "rating_movies": rating_movies, "total_ratings": total_ratings}
+    
+    except:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Error when fetching ratings for user")
