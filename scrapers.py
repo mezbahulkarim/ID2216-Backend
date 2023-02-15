@@ -1,9 +1,16 @@
 from bs4 import BeautifulSoup
 from urllib.request import urlopen, Request
+import base64
 
 # For requirements.txt, add these:
 # beautifulsoup4
 # urllib
+
+def based64(input: str):
+    encoded_to_ascii = input.encode("ascii")
+    encoded_to_bytes = base64.b64encode(encoded_to_ascii)
+    encoded_bytes_to_string = encoded_to_bytes.decode("ascii")
+    return encoded_bytes_to_string
 
 
 def search_movie(value: str):
@@ -35,9 +42,12 @@ def search_movie(value: str):
         except:
             title = ''
 
+        link_encoded = based64(movie_link)
+
         obj['title'] = title
         obj['image_url'] = image_url
         obj['link'] = movie_link
+        obj['link_encoded'] = link_encoded
         obj['id'] = movie_id
         
         all_movies.append(obj)
@@ -94,6 +104,8 @@ async def detail_movie(link: str):
         top_actors.append(obj)
         i += 1
     
+    link_encoded = based64(link)
+
     final['title'] = title
     final['release_date'] = release_date
     final['image_url'] = image_url
@@ -104,6 +116,7 @@ async def detail_movie(link: str):
     final['director'] = director
     final['screenplay'] = screenplay
     final['link'] = link
+    final['link_encoded'] = link_encoded
     final['id'] = link.split('/')[-1]
 
     return final
@@ -140,9 +153,12 @@ def search_game(value: str):
         except:
             image_url = ''
 
+        link_encoded = based64(game_link)
+
         obj['title'] = title
         obj['image_url'] = image_url
         obj['link'] = game_link
+        obj['link_encoded'] = link_encoded
         obj['id'] = game_id
         
         all_games.append(obj)
@@ -173,6 +189,7 @@ def detail_game(link: str):
         genres.append(genre.text.strip())
         i += 1
 
+    link_encoded = based64(link)
     
     final['title'] = title
     final['image_url'] = image_url
@@ -182,6 +199,7 @@ def detail_game(link: str):
     final['publisher'] = publisher
     final['genres'] = genres
     final['link'] = link
+    final['link_encoded'] = link_encoded
 
     return final
 
@@ -204,10 +222,12 @@ def search_book(value: str):
         book_link = 'https://www.goodreads.com/' + book.find('a', class_="bookTitle")['href']
         book_id = book.find('td').find('div')['id']
     
+        link_encoded = based64(book_link)
         
         obj['title'] = title
         obj['image_url'] = image_url
         obj['link'] = book_link
+        obj['link_encoded'] = link_encoded
         obj['id'] = book_id
 
         all_books.append(obj)
@@ -243,7 +263,8 @@ def detail_book(link: str):
     
     book_id = link.split('/')[-1].split('-')[0]
     
-    
+    link_encoded = based64(link)
+
     final['title'] = title
     final['author'] = author
     final['image_url'] = image_url
@@ -252,6 +273,7 @@ def detail_book(link: str):
     final['genres'] = genres
     final['pages'] = pages
     final['link'] = link
+    final['link_encoded'] = link_encoded
     final['id'] = book_id
 
     return final

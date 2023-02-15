@@ -17,6 +17,7 @@ import json
 import asyncio
 from typing import Union
 
+
 db = SessionLocal()
 
 load_dotenv()
@@ -208,11 +209,16 @@ async def game_search(search: str, user: User = Depends(fetch_user)):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                             detail="FAIL, error searching for game")
 
+def base64_toString(input: str):
+    bytes= base64.b64decode(input)
+    return bytes.decode("ascii")
 
 @app.post('/detail_movie')
 async def movie_detail(search: str, user: User = Depends(fetch_user)):
     try:
-        coroutine = asyncio.create_task(detail_movie(search))
+        decoded = base64_toString(search)
+
+        coroutine = asyncio.create_task(detail_movie(decoded))
         await coroutine
         return_val = coroutine.result()
         # movie: Movie_Detail = return_val
@@ -225,8 +231,12 @@ async def movie_detail(search: str, user: User = Depends(fetch_user)):
 
 @app.post('/detail_game')
 async def game_detail(search: str, user: User = Depends(fetch_user)):
+   
+
     try:
-        return_val = detail_game(search)
+        decoded = base64_toString(search)
+
+        return_val = detail_game(decoded)
         # game: Game_Detail = return_val
         # return game
         return return_val
@@ -241,7 +251,9 @@ async def game_detail(search: str, user: User = Depends(fetch_user)):
 @app.post('/detail_book')
 async def book_detail(search: str, user: User = Depends(fetch_user)):
     try:
-        return_val = detail_book(search)
+        decoded = base64_toString(search)
+
+        return_val = detail_book(decoded)
         # book: Book_Detail = return_val
         # return book
         return return_val
@@ -262,6 +274,7 @@ async def wishlist_add_book(book: Book_Detail, user: User = Depends(fetch_user))
         genres=book.genres,
         pages=book.pages,
         link=book.link,
+        link_encoded=book.link_encoded,
         id=book.id
     )
 
@@ -304,6 +317,7 @@ async def wishlist_add_movie(movie: Movie_Detail, user: User = Depends(fetch_use
         director=movie.director,
         screenplay=movie.screenplay,
         link=movie.link,
+        link_encoded= movie.link_encoded,
         id=movie.id
     )
 
@@ -331,6 +345,47 @@ async def wishlist_add_movie(movie: Movie_Detail, user: User = Depends(fetch_use
 
     return {"detail": "OK, Successfully Added Movie to Wishlist"}
 
+@app.post('/wishlist_add_game')
+async def wishlist_add_game(game: Game_Detail, user: User = Depends(fetch_user)):
+
+    games_record = models.Games(
+        title=game.title,
+        image_url=game.image_url,
+        description=game.description,
+        release_date=game.release_date,
+        developer=game.developer,
+        publisher=game.publisher,
+        genres=game.genres,
+        link=game.link,
+        link_encoded=game.link_encoded
+    )
+
+    if db.query(models.Games).filter(models.Games.link == game.link).first():
+        pass
+
+    else:
+        db.add(games_record)
+        db.commit()
+
+    wishlist_record = models.Wishlist(
+        media_id=game.link,
+        media_type="Game",
+        username=user.username
+    )
+
+    if db.query(models.Wishlist).filter(
+            models.Wishlist.username == user.username,
+            models.Wishlist.media_id == game.link).first():
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,
+                            detail="User already added this game to Wishlist")
+
+    else:
+        db.add(wishlist_record)
+        db.commit()
+
+    return {"detail": "OK, Successfully Added Game to Wishlist"}
+
+
 
 @app.post('/library_add_book')
 async def library_add_book(book: Book_Detail, user: User = Depends(fetch_user)):
@@ -344,6 +399,7 @@ async def library_add_book(book: Book_Detail, user: User = Depends(fetch_user)):
         genres=book.genres,
         pages=book.pages,
         link=book.link,
+        link_encoded = book.link_encoded,
         id=book.id
     )
 
@@ -386,6 +442,7 @@ async def library_add_movie(movie: Movie_Detail, user: User = Depends(fetch_user
         director=movie.director,
         screenplay=movie.screenplay,
         link=movie.link,
+        link_encoded = movie.link_encoded,
         id=movie.id
     )
 
@@ -425,7 +482,8 @@ async def library_add_game(game: Game_Detail, user: User = Depends(fetch_user)):
         developer=game.developer,
         publisher=game.publisher,
         genres=game.genres,
-        link=game.link
+        link=game.link,
+        link_encoded=game.link_encoded
     )
 
     if db.query(models.Games).filter(models.Games.link == game.link).first():

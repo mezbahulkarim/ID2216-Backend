@@ -1,8 +1,8 @@
-from scrapers import *
+#from scrapers import *
 
 #print(search_movie("   Rush        Hour     ")[0])
 #print(search_game("      Metro    Exodus" )[0])
-print(detail_game("https://store.steampowered.com/app/692890/Roboquest/?snr=1_7_7_151_150_1"))
+#print(detail_game("https://store.steampowered.com/app/692890/Roboquest/?snr=1_7_7_151_150_1"))
 #print(type(detail_game("https://store.steampowered.com/app/412020/Metro_Exodus/")['genres']))
 #print(detail_movie('https://www.themoviedb.org/movie/77'))
 #print(detail_movie('https://www.themoviedb.org/movie/219')['actors'])
@@ -87,3 +87,38 @@ print(detail_game("https://store.steampowered.com/app/692890/Roboquest/?snr=1_7_
 #     host="db.dtohwsymdfnwstwyburf.supabase.co",
 #     database="postgres"
 # )
+# import base64
+
+# input = "https://www.goodreads.com//book/show/11588.The_Shining?from_search=true&from_srp=true&qid=yNdVC61Au5&rank=1"
+
+# encoded_to_ascii = input.encode("ascii")
+
+# encoded_to_bytes = base64.b64encode(encoded_to_ascii)
+
+# encoded_bytes_to_string = encoded_to_bytes.decode("ascii")
+
+# print(encoded_bytes_to_string)
+
+# if (encoded_bytes_to_string == "aHR0cHM6Ly93d3cuZ29vZHJlYWRzLmNvbS8vYm9vay9zaG93LzExNTg4LlRoZV9TaGluaW5nP2Zyb21fc2VhcmNoPXRydWUmZnJvbV9zcnA9dHJ1ZSZxaWQ9eU5kVkM2MUF1NSZyYW5rPTE="):
+#     print("done")
+
+# input = "https://www.goodreads.com//book/show/11588.The_Shining?from_search=true&from_srp=true&qid=yNdVC61Au5&rank=1";
+# b64_encoded_string = btoa(input)
+# console.log(b64_encoded_string)
+
+import base64
+
+# def based64(input: str):
+#     encoded_to_ascii = input.encode("ascii")
+#     encoded_to_bytes = base64.b64encode(encoded_to_ascii)
+#     encoded_bytes_to_string = encoded_to_bytes.decode("ascii")
+#     return encoded_bytes_to_string
+
+# print(based64("https://www.goodreads.com//book/show/11588.The_Shining?from_search=true&from_srp=true&qid=yNdVC61Au5&rank=1"))
+
+
+def base64_toString(input: str):
+    bytes= base64.b64decode(input)
+    return bytes.decode("ascii")
+
+print(base64_toString("cw=="))

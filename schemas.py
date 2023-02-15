@@ -15,6 +15,7 @@ class Movie_Search(BaseModel):
     title: str
     image_url: str
     link: str
+    link_encoded: str
     id: str
 
     class Config:
@@ -32,6 +33,7 @@ class Movie_Detail(BaseModel):
     director: str
     screenplay: str
     link: str
+    link_encoded: str
     id: str
 
     class Config:
@@ -42,6 +44,7 @@ class Game_Search(BaseModel):
     title: str
     image_url: str
     link: str
+    link_encoded: str
     id: str
 
     class Config:
@@ -57,6 +60,7 @@ class Game_Detail(BaseModel):
     publisher: str
     genres: list
     link: str
+    link_encoded: str
     # game_id: int
 
     class Config:
@@ -67,6 +71,7 @@ class Book_Search(BaseModel):
     title: str
     image_url: str
     link: str
+    link_encoded: str
     id: str
 
     class Config:
@@ -82,6 +87,7 @@ class Book_Detail(BaseModel):
     genres: list
     pages: str
     link: str
+    link_encoded: str
     id: str
 
     class Config:

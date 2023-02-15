@@ -23,6 +23,7 @@ class Movies(Base):
     director = Column(String)
     screenplay = Column(String)
     link = Column(String, unique=True)
+    link_encoded = Column(String, unique=True)
     id = Column(String, primary_key=True)
 
 
@@ -37,6 +38,7 @@ class Games(Base):
     publisher = Column(String)
     genres = Column(ARRAY(String))
     link = Column(String, primary_key=True)
+    link_encoded = Column(String, unique=True)
     game_id = Column(Integer, primary_key=True)
 
 
@@ -51,6 +53,7 @@ class Books(Base):
     genres = Column(ARRAY(String))
     pages = Column(String)
     link = Column(String, unique=True)
+    link_encoded = Column(String, unique=True)
     id = Column(String, primary_key=True)
 
 
