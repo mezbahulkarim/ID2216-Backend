@@ -182,448 +182,232 @@ async def change_password(password: str, user:User = Depends(fetch_user)):
 
 # Scraper Endpoints
 
-
-@app.post('/search_movie')
-async def movie_search(search: str, user: User = Depends(fetch_user)):
+@app.post('/search_activity')
+async def activity_search(media_type:str, search: str, user: User = Depends(fetch_user)):
+    
     try:
-        return search_movie(search)
+        if media_type == 'Book':
+            return search_book(search)
+
+        if media_type == 'Movie':
+            return search_movie(search)
+
+        if media_type == 'Game':
+            return search_game(search)
+
     except:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                            detail="FAIL, error searching for movie")
+                            detail="FAIL, error searching for activity")
 
-
-@app.post('/search_book')
-async def book_search(search: str, user: User = Depends(fetch_user)):
-    try:
-        return search_book(search)
-    except:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                            detail="FAIL, error searching for book")
-
-
-@app.post('/search_game')
-async def game_search(search: str, user: User = Depends(fetch_user)):
-    try:
-        return search_game(search)
-    except:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                            detail="FAIL, error searching for game")
 
 def base64_toString(input: str):
-    bytes= base64.b64decode(input)
-    return bytes.decode("ascii")
+    bytes= base64.urlsafe_b64decode(input)
+    decoded_slash = bytes.decode("utf-8")
+    decoded = decoded_slash.replace('SLASH', '/')       #scrapers line 13
+    return decoded
 
-@app.post('/detail_movie')
-async def movie_detail(search: str, user: User = Depends(fetch_user)):
+@app.post('/detail_activity')
+async def activity_detail(media_type:str, encoded_link: str, user: User = Depends(fetch_user)):
+    decoded = base64_toString(encoded_link)
+
     try:
-        decoded = base64_toString(search)
+        if media_type == 'Movie':
+            coroutine = asyncio.create_task(detail_movie(decoded))
+            await coroutine
+            return_val = coroutine.result()
+            return return_val
 
-        coroutine = asyncio.create_task(detail_movie(decoded))
-        await coroutine
-        return_val = coroutine.result()
-        # movie: Movie_Detail = return_val
-        # return movie
-        return return_val
+        if media_type == 'Book':
+            return detail_book(decoded)
+
+        if media_type == 'Game':
+            return detail_game(decoded)
+
     except:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                            detail="FAIL, error getting movie details")
+                    detail="FAIL, error searching for details of activity")
 
 
-@app.post('/detail_game')
-async def game_detail(search: str, user: User = Depends(fetch_user)):
-   
-
+@app.post('/add_activity')
+async def add_activity(media_type: str, encoded_link: str, wishlist_or_library: str, user: User = Depends(fetch_user)):
     try:
-        decoded = base64_toString(search)
+        table = ''
 
-        return_val = detail_game(decoded)
-        # game: Game_Detail = return_val
-        # return game
-        return return_val
-    except:
+        if wishlist_or_library == 'Wishlist':
+            table = models.Wishlist
+            
+        if wishlist_or_library == 'Library':
+            table = models.Library
+
+        
+        if media_type == 'Book':
+            book = await activity_detail(media_type, encoded_link, user)
+
+            books_record = models.Books(
+            title=book['title'],
+            author=book['author'],
+            image_url=book['image_url'],
+            description=book['description'],
+            publication_info=book['publication_info'],
+            genres=book['genres'],
+            pages=book['pages'],
+            link=book['link'],
+            link_encoded=book['link_encoded'],
+            id=book['id']
+            )
+
+            if db.query(models.Books).filter(models.Books.id == book['id']).first():
+                pass
+
+            else:
+                db.add(books_record)
+                db.commit()
+
+            table_record = table(
+                media_id=book['id'],
+                media_type="Book",
+                username=user.username
+            )
+
+            if db.query(table).filter(table.username == user.username,
+                                            table.media_id == book['id']).first():
+                raise HTTPException(status_code=status.HTTP_409_CONFLICT,
+                                detail="User already added this book to Wishlist or Library")
+
+            else:
+                db.add(table_record)
+                db.commit()
+
+        
+        if media_type == 'Movie':
+            movie = await activity_detail(media_type, encoded_link, user)
+
+            movies_record = models.Movies(
+            title=movie['title'],
+            release_date=movie['release_date'],
+            image_url=movie['image_url'],
+            genre=movie['genre'],
+            length=movie['length'],
+            description=movie['description'],
+            actors=movie['actors'],
+            director=movie['director'],
+            screenplay=movie['screenplay'],
+            link=movie['link'],
+            link_encoded= movie['link_encoded'],
+            id=movie['id']
+            )
+
+            if db.query(models.Movies).filter(models.Movies.id == movie['id']).first():
+                pass
+
+            else:
+                db.add(movies_record)
+                db.commit()
+
+            table_record = table(
+                media_id=movie['id'],
+                media_type="Movie",
+                username=user.username
+            )
+
+            if db.query(table).filter(table.username == user.username,
+                                                table.media_id == movie['id']).first():
+                raise HTTPException(status_code=status.HTTP_409_CONFLICT,
+                                    detail="User already added this movie to Wishlist or Library")
+
+            else:
+                db.add(table_record)
+                db.commit()
+
+
+        if media_type == 'Game':
+            game = await activity_detail(media_type, encoded_link, user)
+            
+            games_record = models.Games(
+            title=game['title'],
+            image_url=game['image_url'],
+            description=game['description'],
+            release_date=game['release_date'],
+            developer=game['developer'],
+            publisher=game['publisher'],
+            genres=game['genres'],
+            link=game['link'],
+            link_encoded=game['link_encoded']
+            )
+
+            if db.query(models.Games).filter(models.Games.link == game['link']).first():
+                pass
+
+            else:
+                db.add(games_record)
+                db.commit()
+
+            table_record = table(
+                media_id=game['link'],
+                media_type="Game",
+                username=user.username
+            )
+
+            if db.query(table).filter(
+                    table.username == user.username,
+                    table.media_id == game['link']).first():
+                raise HTTPException(status_code=status.HTTP_409_CONFLICT,
+                                    detail="User already added this game to Wishlist or Library")
+
+            else:
+                db.add(table_record)
+                db.commit()
+
+
+        return {"detail": "OK, Successfully Added Activity to Wishlist or Library"}
+    
+    except: 
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                            detail="FAIL, error getting game details")
-    # NOTES for game_detail- getting this error, POSSIBLY FOR 18+ GAMES:
-    # title = page_soup.find('div', class_="apphub_AppName").text.strip()
-    # AttributeError: 'NoneType' object has no attribute 'text'
+                                    detail="Error when adding activity to Wishlist or Library")
 
 
-@app.post('/detail_book')
-async def book_detail(search: str, user: User = Depends(fetch_user)):
+@app.get('/get_all_library_or_wishlist_items')
+async def get_all_library_or_wishlist_items(wishlist_or_library: str, user: User = Depends(fetch_user)):
+    
+    table = ''
+    
+    if wishlist_or_library == 'Wishlist':
+        table = models.Wishlist
+
+    if wishlist_or_library == 'Library':
+        table = models.Library
+
+    book_records = db.query(models.Books).filter(
+        table.username == user.username, models.Books.id == table.media_id).all()
+
+    movie_records = db.query(models.Movies).filter(
+        table.username == user.username, models.Movies.id == table.media_id).all()
+
+    game_records = db.query(models.Games).filter(
+        table.username == user.username, models.Games.link == table.media_id).all()
+    
+    return book_records + movie_records + game_records
+
+
+@app.post('/delete_wishlist_or_library_item')
+async def delete_item(wishlist_or_library:str ,item_id: str, user: User = Depends(fetch_user)):
+    table = ''
     try:
-        decoded = base64_toString(search)
-
-        return_val = detail_book(decoded)
-        # book: Book_Detail = return_val
-        # return book
-        return return_val
-    except:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                            detail="FAIL, error getting book details")
-
-
-@app.post('/wishlist_add_book')
-async def wishlist_add_book(book: Book_Detail, user: User = Depends(fetch_user)):
-
-    books_record = models.Books(
-        title=book.title,
-        author=book.author,
-        image_url=book.image_url,
-        description=book.description,
-        publication_info=book.publication_info,
-        genres=book.genres,
-        pages=book.pages,
-        link=book.link,
-        link_encoded=book.link_encoded,
-        id=book.id
-    )
-
-    if db.query(models.Books).filter(models.Books.id == book.id).first():
-        pass
-
-    else:
-        db.add(books_record)
-        db.commit()
-
-    wishlist_record = models.Wishlist(
-        media_id=book.id,
-        media_type="Book",
-        username=user.username
-    )
-
-    if db.query(models.Wishlist).filter(models.Wishlist.username == user.username,
-                                        models.Wishlist.media_id == book.id).first():
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT,
-                            detail="User already added this book to Wishlist")
-
-    else:
-        db.add(wishlist_record)
-        db.commit()
-
-    return {"detail": "OK, Successfully Added Book to Wishlist"}
-
-
-@app.post('/wishlist_add_movie')
-async def wishlist_add_movie(movie: Movie_Detail, user: User = Depends(fetch_user)):
-
-    movies_record = models.Movies(
-        title=movie.title,
-        release_date=movie.release_date,
-        image_url=movie.image_url,
-        genre=movie.genre,
-        length=movie.length,
-        description=movie.description,
-        actors=movie.actors,
-        director=movie.director,
-        screenplay=movie.screenplay,
-        link=movie.link,
-        link_encoded= movie.link_encoded,
-        id=movie.id
-    )
-
-    if db.query(models.Movies).filter(models.Movies.id == movie.id).first():
-        pass
-
-    else:
-        db.add(movies_record)
-        db.commit()
-
-    wishlist_record = models.Wishlist(
-        media_id=movie.id,
-        media_type="Movie",
-        username=user.username
-    )
-
-    if db.query(models.Wishlist).filter(models.Wishlist.username == user.username,
-                                        models.Wishlist.media_id == movie.id).first():
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT,
-                            detail="User already added this movie to Wishlist")
-
-    else:
-        db.add(wishlist_record)
-        db.commit()
-
-    return {"detail": "OK, Successfully Added Movie to Wishlist"}
-
-@app.post('/wishlist_add_game')
-async def wishlist_add_game(game: Game_Detail, user: User = Depends(fetch_user)):
-
-    games_record = models.Games(
-        title=game.title,
-        image_url=game.image_url,
-        description=game.description,
-        release_date=game.release_date,
-        developer=game.developer,
-        publisher=game.publisher,
-        genres=game.genres,
-        link=game.link,
-        link_encoded=game.link_encoded
-    )
-
-    if db.query(models.Games).filter(models.Games.link == game.link).first():
-        pass
-
-    else:
-        db.add(games_record)
-        db.commit()
-
-    wishlist_record = models.Wishlist(
-        media_id=game.link,
-        media_type="Game",
-        username=user.username
-    )
-
-    if db.query(models.Wishlist).filter(
-            models.Wishlist.username == user.username,
-            models.Wishlist.media_id == game.link).first():
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT,
-                            detail="User already added this game to Wishlist")
-
-    else:
-        db.add(wishlist_record)
-        db.commit()
-
-    return {"detail": "OK, Successfully Added Game to Wishlist"}
-
-
-
-@app.post('/library_add_book')
-async def library_add_book(book: Book_Detail, user: User = Depends(fetch_user)):
-
-    books_record = models.Books(
-        title=book.title,
-        author=book.author,
-        image_url=book.image_url,
-        description=book.description,
-        publication_info=book.publication_info,
-        genres=book.genres,
-        pages=book.pages,
-        link=book.link,
-        link_encoded = book.link_encoded,
-        id=book.id
-    )
-
-    if db.query(models.Books).filter(models.Books.id == book.id).first():
-        pass
-
-    else:
-        db.add(books_record)
-        db.commit()
-
-    library_record = models.Library(
-        media_id=book.id,
-        media_type="Book",
-        username=user.username
-    )
-
-    if db.query(models.Library).filter(models.Library.username == user.username,
-                                       models.Library.media_id == book.id).first():
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT,
-                            detail="User already added this book to Library")
-
-    else:
-        db.add(library_record)
-        db.commit()
-
-    return {"detail": "OK, Successfully Added Book to Library"}
-
-
-@app.post('/library_add_movie')
-async def library_add_movie(movie: Movie_Detail, user: User = Depends(fetch_user)):
-
-    movies_record = models.Movies(
-        title=movie.title,
-        release_date=movie.release_date,
-        image_url=movie.image_url,
-        genre=movie.genre,
-        length=movie.length,
-        description=movie.description,
-        actors=movie.actors,
-        director=movie.director,
-        screenplay=movie.screenplay,
-        link=movie.link,
-        link_encoded = movie.link_encoded,
-        id=movie.id
-    )
-
-    if db.query(models.Movies).filter(models.Movies.id == movie.id).first():
-        pass
-
-    else:
-        db.add(movies_record)
-        db.commit()
-
-        library_record = models.Library(
-            media_id=movie.id,
-            media_type="Movie",
-            username=user.username
-        )
-
-    if db.query(models.Library).filter(models.Library.username == user.username,
-                                       models.Library.media_id == movie.id).first():
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT,
-                            detail="User already added this movie to Library")
-
-    else:
-        db.add(library_record)
-        db.commit()
-
-    return {"detail": "OK, Successfully Added Movie to Library"}
-
-
-@app.post('/library_add_game')
-async def library_add_game(game: Game_Detail, user: User = Depends(fetch_user)):
-
-    games_record = models.Games(
-        title=game.title,
-        image_url=game.image_url,
-        description=game.description,
-        release_date=game.release_date,
-        developer=game.developer,
-        publisher=game.publisher,
-        genres=game.genres,
-        link=game.link,
-        link_encoded=game.link_encoded
-    )
-
-    if db.query(models.Games).filter(models.Games.link == game.link).first():
-        pass
-
-    else:
-        db.add(games_record)
-        db.commit()
-
-    library_record = models.Library(
-        media_id=game.link,
-        media_type="Game",
-        username=user.username
-    )
-
-    if db.query(models.Library).filter(
-            models.Library.username == user.username,
-            models.Library.media_id == game.link).first():
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT,
-                            detail="User already added this game to Library")
-
-    else:
-        db.add(library_record)
-        db.commit()
-
-    return {"detail": "OK, Successfully Added Game to Library"}
-
-
-@app.get('/wishlist_get_my_books')
-async def wishlist_get_my_books(user: User = Depends(fetch_user)):
-    try:
-        records = db.query(models.Books).filter(
-            # don't need explicit foreign key relations
-            models.Books.id == models.Wishlist.media_id,
-            # does adding more parameters reduce complexity? :Hmmm
-            models.Wishlist.username == user.username,
-            models.Wishlist.media_type == "Book").all()  # don't need this
-    except:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                            detail="Error when retrieving user's wishlist books")
-
-    return records
-
-
-@app.get('/wishlist_get_my_movies')
-async def wishlist_get_my_movies(user: User = Depends(fetch_user)):
-    try:
-        records = db.query(models.Movies).filter(
-            models.Movies.id == models.Wishlist.media_id,
-            models.Wishlist.username == user.username,
-            models.Wishlist.media_type == "Movie").all()
-    except:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                            detail="Error when retrieving user's wishlist movies")
-
-    return records
-
-
-@app.get('/wishlist_get_my_games')
-async def wishlist_get_my_games(user: User = Depends(fetch_user)):
-    try:
-        records = db.query(models.Games).filter(
-            models.Games.link == models.Wishlist.media_id,
-            models.Wishlist.username == user.username,
-            models.Wishlist.media_type == "Game").all()
-    except:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                            detail="Error when retrieving user's wishlist movies")
-
-    return records
-
-
-@app.get('/library_get_my_books')
-async def library_get_my_books(user: User = Depends(fetch_user)):
-    try:
-        records = db.query(models.Books).filter(
-            models.Books.id == models.Library.media_id,
-            models.Library.username == user.username,
-            models.Library.media_type == "Book").all()
-    except:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                            detail="Error when retrieving all library books")
-
-    return records
-
-
-@app.get('/library_get_my_movies')
-async def library_get_my_movies(user: User = Depends(fetch_user)):
-    try:
-        records = db.query(models.Movies).filter(
-            models.Movies.id == models.Library.media_id,
-            models.Library.username == user.username,
-            models.Library.media_type == "Movie").all()
-    except:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                            detail="Error when retrieving all library books")
-
-    return records
-
-
-@app.get('/library_get_my_games')
-async def library_get_my_games(user: User = Depends(fetch_user)):
-    try:
-        records = db.query(models.Games).filter(
-            models.Games.link == models.Library.media_id,
-            models.Library.username == user.username,
-            models.Library.media_type == "Game").all()
-    except:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                            detail="Error when retrieving all library books")
-
-    return records
-
-
-@app.post('/delete_wishlist_item')
-async def delete_wishlist_item(item_id: str, user: User = Depends(fetch_user)):
-    try:
-        db.query(models.Wishlist).filter(models.Wishlist.media_id == item_id,
-                                         models.Wishlist.username == user.username,).delete()
+        if wishlist_or_library == 'Library':
+            table = models.Library
+
+        if wishlist_or_library == 'Wishlist':
+            table = models.Wishlist
+    
+        db.query(table).filter(table.media_id == item_id,
+                                       table.username == user.username,).delete()
         db.commit()
 
     except:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                            detail="Error when deleting wishlist item")
+                            detail="Error when deleting wishlist or library item")
 
-    return {"detail": "OK, Successfully Deleted Wishlist Item"}
-
-
-@app.post('/delete_library_item')
-async def delete_library_item(item_id: str, user: User = Depends(fetch_user)):
-    try:
-        db.query(models.Library).filter(models.Library.media_id == item_id,
-                                        models.Library.username == user.username,).delete()
-        db.commit()
-
-    except:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                            detail="Error when deleting library item")
-
-    return {"detail": "OK, Successfully Deleted Library Item"}
+    return {"detail": "OK, Successfully Deleted Wishlist or Library Item"}
 
 
 @app.post('/move_item_wishlist_to_library')
@@ -647,7 +431,7 @@ async def move_wishlist_library(item_id: str, user: User = Depends(fetch_user)):
         db.add(library_record)
         db.commit()
 
-        await delete_wishlist_item(item_id, user)
+        await delete_item('Wishlist',item_id, user)
 
     except:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
@@ -676,7 +460,7 @@ async def move_library_wishlist(item_id: str, user: User = Depends(fetch_user)):
         db.add(wishlist_record)
         db.commit()
 
-        await delete_library_item(item_id, user)
+        await delete_item('Library', item_id, user)
 
     except:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
@@ -849,7 +633,6 @@ def hours_spent(user: User = Depends(fetch_user)):
     except:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                             detail="Error when fetching hours spent for user")
-
 
 
 @app.get('/ratings')

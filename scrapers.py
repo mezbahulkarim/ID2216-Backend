@@ -8,8 +8,9 @@ import base64
 
 def based64(input: str):
     encoded_to_ascii = input.encode("ascii")
-    encoded_to_bytes = base64.b64encode(encoded_to_ascii)
+    encoded_to_bytes = base64.urlsafe_b64encode(encoded_to_ascii)
     encoded_bytes_to_string = encoded_to_bytes.decode("ascii")
+    encoded_bytes_to_string = encoded_bytes_to_string.replace('/', 'SLASH')
     return encoded_bytes_to_string
 
 

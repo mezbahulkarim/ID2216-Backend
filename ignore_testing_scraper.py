@@ -117,8 +117,14 @@ import base64
 # print(based64("https://www.goodreads.com//book/show/11588.The_Shining?from_search=true&from_srp=true&qid=yNdVC61Au5&rank=1"))
 
 
-def base64_toString(input: str):
-    bytes= base64.b64decode(input)
-    return bytes.decode("ascii")
+# def base64_toString(input: str):
+#     bytes= base64.b64decode(input)
+#     return bytes.decode("ascii")
 
-print(base64_toString("cw=="))
+# print(base64_toString("cw=="))
+
+from main import base64_toString
+from scrapers import based64
+
+s = based64('/')
+print(s)
