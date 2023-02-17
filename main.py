@@ -233,10 +233,10 @@ async def add_activity(media_type: str, encoded_link: str, wishlist_or_library: 
     try:
         table = ''
 
-        if wishlist_or_library == 'Wishlist':
+        if wishlist_or_library == 'wishlist':
             table = models.Wishlist
             
-        if wishlist_or_library == 'Library':
+        if wishlist_or_library == 'library':
             table = models.Library
 
         
@@ -371,10 +371,10 @@ async def get_all_library_or_wishlist_items(wishlist_or_library: str, user: User
     
     table = ''
     
-    if wishlist_or_library == 'Wishlist':
+    if wishlist_or_library == 'wishlist':
         table = models.Wishlist
 
-    if wishlist_or_library == 'Library':
+    if wishlist_or_library == 'library':
         table = models.Library
 
     book_records = db.query(models.Books).filter(
@@ -393,10 +393,10 @@ async def get_all_library_or_wishlist_items(wishlist_or_library: str, user: User
 async def delete_item(wishlist_or_library:str ,item_id: str, user: User = Depends(fetch_user)):
     table = ''
     try:
-        if wishlist_or_library == 'Library':
+        if wishlist_or_library == 'library':
             table = models.Library
 
-        if wishlist_or_library == 'Wishlist':
+        if wishlist_or_library == 'wishlist':
             table = models.Wishlist
     
         db.query(table).filter(table.media_id == item_id,
