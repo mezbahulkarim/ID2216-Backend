@@ -186,13 +186,13 @@ async def change_password(password: str, user:User = Depends(fetch_user)):
 async def activity_search(media_type:str, search: str, user: User = Depends(fetch_user)):
     
     try:
-        if media_type == 'Book':
+        if media_type == 'book':
             return search_book(search)
 
-        if media_type == 'Movie':
+        if media_type == 'movie':
             return search_movie(search)
 
-        if media_type == 'Game':
+        if media_type == 'game':
             return search_game(search)
 
     except:
@@ -211,16 +211,16 @@ async def activity_detail(media_type:str, encoded_link: str, user: User = Depend
     decoded = base64_toString(encoded_link)
 
     try:
-        if media_type == 'Movie':
+        if media_type == 'movie':
             coroutine = asyncio.create_task(detail_movie(decoded))
             await coroutine
             return_val = coroutine.result()
             return return_val
 
-        if media_type == 'Book':
+        if media_type == 'book':
             return detail_book(decoded)
 
-        if media_type == 'Game':
+        if media_type == 'game':
             return detail_game(decoded)
 
     except:
@@ -240,7 +240,7 @@ async def add_activity(media_type: str, encoded_link: str, wishlist_or_library: 
             table = models.Library
 
         
-        if media_type == 'Book':
+        if media_type == 'book':
             book = await activity_detail(media_type, encoded_link, user)
 
             books_record = models.Books(
@@ -279,7 +279,7 @@ async def add_activity(media_type: str, encoded_link: str, wishlist_or_library: 
                 db.commit()
 
         
-        if media_type == 'Movie':
+        if media_type == 'movie':
             movie = await activity_detail(media_type, encoded_link, user)
 
             movies_record = models.Movies(
@@ -320,7 +320,7 @@ async def add_activity(media_type: str, encoded_link: str, wishlist_or_library: 
                 db.commit()
 
 
-        if media_type == 'Game':
+        if media_type == 'game':
             game = await activity_detail(media_type, encoded_link, user)
             
             games_record = models.Games(
