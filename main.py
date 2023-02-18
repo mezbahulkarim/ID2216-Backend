@@ -206,39 +206,91 @@ def base64_toString(input: str):
     decoded = decoded_slash.replace('SLASH', '/')       #scrapers line 13
     return decoded
 
+async def check_in_wishlist_or_library(media_id:str, user: User = Depends(fetch_user)):
+    if db.query(models.Library).filter(models.Library.media_id == media_id, models.Library.username == user.username).first():
+        return 'library'
+
+    if db.query(models.Wishlist).filter(models.Wishlist.media_id == media_id, models.Wishlist.username == user.username).first():
+        return 'wishlist'
+
+    return ''
+
+async def check_progress_table(media_id:str, media_type:str, user: User = Depends(fetch_user)):
+    
+    if media_type == 'book':
+        record = db.query(models.Progress_Books).filter(models.Progress_Books.media_id == media_id, models.Progress_Books.username == user.username).first()
+        if record:
+            return record
+
+    if media_type == 'movie':
+        record = db.query(models.Progress_Movies).filter(models.Progress_Movies.media_id == media_id, models.Progress_Movies.username == user.username).first()
+        if record:
+            return record
+    
+    if media_type == 'game':
+        record = db.query(models.Progress_Games).filter(models.Progress_Games.media_id == media_id, models.Progress_Games.username == user.username).first()
+        if record:
+            return record
+    
+    return None
+
 @app.post('/detail_activity')
 async def activity_detail(media_type:str, encoded_link: str, user: User = Depends(fetch_user)):
     decoded = base64_toString(encoded_link)
 
-    try:
-        if media_type == 'movie':
-            coroutine = asyncio.create_task(detail_movie(decoded))
-            await coroutine
-            return_val = coroutine.result()
-            return return_val
+    # try:
+    if media_type == 'movie':
+        coroutine = asyncio.create_task(detail_movie(decoded))
+        await coroutine
+        detail = coroutine.result()
+        added_to = await check_in_wishlist_or_library(detail['id'], user)
+        detail['added_to'] = added_to
+        progress_record = await check_progress_table(detail['id'], 'movie', user)
+        if progress_record:
+            detail['hours_watched'] = progress_record.hours_watched
+            detail['rating'] = progress_record.rating
+            detail['notes'] = progress_record.notes
+        return detail
 
-        if media_type == 'book':
-            return detail_book(decoded)
+    if media_type == 'book':
+        detail = detail_book(decoded)
+        added_to = await check_in_wishlist_or_library(detail['id'], user)
+        detail['added_to'] = added_to
+        progress_record = await check_progress_table(detail['id'], 'book', user)
+        if progress_record:
+            detail['hours_read'] = progress_record.hours_read
+            detail['rating'] = progress_record.rating
+            detail['notes'] = progress_record.notes
+            detail['pages_read'] = progress_record.pages_read
+        return detail
 
-        if media_type == 'game':
-            return detail_game(decoded)
-
-    except:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="FAIL, error searching for details of activity")
+    if media_type == 'game':
+        detail = detail_game(decoded)
+        added_to = await check_in_wishlist_or_library(detail['link'], user)
+        detail['added_to'] = added_to
+        progress_record = await check_progress_table(detail['link'], 'game', user)
+        if progress_record:
+            detail['hours_played'] = progress_record.hours_played
+            detail['rating'] = progress_record.rating
+            detail['notes'] = progress_record.notes
+        return detail
+    # except:
+    #     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+    #                 detail="FAIL, error searching for details of activity")
 
 
 @app.post('/add_activity')
 async def add_activity(media_type: str, encoded_link: str, wishlist_or_library: str, user: User = Depends(fetch_user)):
     try:
         table = ''
+        add_to_progress: bool
 
         if wishlist_or_library == 'wishlist':
             table = models.Wishlist
             
         if wishlist_or_library == 'library':
             table = models.Library
-
+            add_to_progress = True
         
         if media_type == 'book':
             book = await activity_detail(media_type, encoded_link, user)
@@ -278,7 +330,12 @@ async def add_activity(media_type: str, encoded_link: str, wishlist_or_library: 
                 db.add(table_record)
                 db.commit()
 
-        
+            if add_to_progress:
+                progress_record = models.Progress_Books(
+                    media_id = book['id']
+                )
+                await update_progress_books(progress_record, user)    
+
         if media_type == 'movie':
             movie = await activity_detail(media_type, encoded_link, user)
 
@@ -319,6 +376,12 @@ async def add_activity(media_type: str, encoded_link: str, wishlist_or_library: 
                 db.add(table_record)
                 db.commit()
 
+            if add_to_progress:
+                progress_record = models.Progress_Movies(
+                    media_id = movie['id']
+                )
+                await update_progress_movies(progress_record, user)    
+
 
         if media_type == 'game':
             game = await activity_detail(media_type, encoded_link, user)
@@ -357,6 +420,12 @@ async def add_activity(media_type: str, encoded_link: str, wishlist_or_library: 
             else:
                 db.add(table_record)
                 db.commit()
+
+            if add_to_progress:
+                progress_record = models.Progress_Games(
+                    media_id = game['link']
+                )
+                await update_progress_games(progress_record, user)  
 
 
         return {"detail": "OK, Successfully Added Activity to Wishlist or Library"}

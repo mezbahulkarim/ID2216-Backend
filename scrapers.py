@@ -119,6 +119,7 @@ async def detail_movie(link: str):
     final['link'] = link
     final['link_encoded'] = link_encoded
     final['id'] = link.split('/')[-1]
+    final['media_type'] = 'movie'
 
     return final
 
@@ -201,6 +202,7 @@ def detail_game(link: str):
     final['genres'] = genres
     final['link'] = link
     final['link_encoded'] = link_encoded
+    final['media_type'] = 'game'
 
     return final
 
@@ -276,5 +278,6 @@ def detail_book(link: str):
     final['link'] = link
     final['link_encoded'] = link_encoded
     final['id'] = book_id
+    final['media_type'] = 'book'
 
     return final
