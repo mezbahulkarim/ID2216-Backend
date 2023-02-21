@@ -16,6 +16,7 @@ from scrapers import *
 import json
 import asyncio
 from typing import Union
+from operator import itemgetter
 
 
 db = SessionLocal()
@@ -238,45 +239,45 @@ async def check_progress_table(media_id:str, media_type:str, user: User = Depend
 async def activity_detail(media_type:str, encoded_link: str, user: User = Depends(fetch_user)):
     decoded = base64_toString(encoded_link)
 
-    # try:
-    if media_type == 'movie':
-        coroutine = asyncio.create_task(detail_movie(decoded))
-        await coroutine
-        detail = coroutine.result()
-        added_to = await check_in_wishlist_or_library(detail['id'], user)
-        detail['added_to'] = added_to
-        progress_record = await check_progress_table(detail['id'], 'movie', user)
-        if progress_record:
-            detail['hours_watched'] = progress_record.hours_watched
-            detail['rating'] = progress_record.rating
-            detail['notes'] = progress_record.notes
-        return detail
+    try:
+        if media_type == 'movie':
+            coroutine = asyncio.create_task(detail_movie(decoded))
+            await coroutine
+            detail = coroutine.result()
+            added_to = await check_in_wishlist_or_library(detail['id'], user)
+            detail['added_to'] = added_to
+            progress_record = await check_progress_table(detail['id'], 'movie', user)
+            if progress_record:
+                detail['hours_watched'] = progress_record.hours_watched
+                detail['rating'] = progress_record.rating
+                detail['notes'] = progress_record.notes
+            return detail
 
-    if media_type == 'book':
-        detail = detail_book(decoded)
-        added_to = await check_in_wishlist_or_library(detail['id'], user)
-        detail['added_to'] = added_to
-        progress_record = await check_progress_table(detail['id'], 'book', user)
-        if progress_record:
-            detail['hours_read'] = progress_record.hours_read
-            detail['rating'] = progress_record.rating
-            detail['notes'] = progress_record.notes
-            detail['pages_read'] = progress_record.pages_read
-        return detail
+        if media_type == 'book':
+            detail = detail_book(decoded)
+            added_to = await check_in_wishlist_or_library(detail['id'], user)
+            detail['added_to'] = added_to
+            progress_record = await check_progress_table(detail['id'], 'book', user)
+            if progress_record:
+                detail['hours_read'] = progress_record.hours_read
+                detail['rating'] = progress_record.rating
+                detail['notes'] = progress_record.notes
+                detail['pages_read'] = progress_record.pages_read
+            return detail
 
-    if media_type == 'game':
-        detail = detail_game(decoded)
-        added_to = await check_in_wishlist_or_library(detail['link'], user)
-        detail['added_to'] = added_to
-        progress_record = await check_progress_table(detail['link'], 'game', user)
-        if progress_record:
-            detail['hours_played'] = progress_record.hours_played
-            detail['rating'] = progress_record.rating
-            detail['notes'] = progress_record.notes
-        return detail
-    # except:
-    #     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-    #                 detail="FAIL, error searching for details of activity")
+        if media_type == 'game':
+            detail = detail_game(decoded)
+            added_to = await check_in_wishlist_or_library(detail['link'], user)
+            detail['added_to'] = added_to
+            progress_record = await check_progress_table(detail['link'], 'game', user)
+            if progress_record:
+                detail['hours_played'] = progress_record.hours_played
+                detail['rating'] = progress_record.rating
+                detail['notes'] = progress_record.notes
+            return detail
+    except:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="FAIL, error searching for details of activity")
 
 
 @app.post('/add_activity')
@@ -461,9 +462,11 @@ async def get_all_library_or_wishlist_items(wishlist_or_library: str, user: User
 @app.post('/delete_wishlist_or_library_item')
 async def delete_item(wishlist_or_library:str ,item_id: str, user: User = Depends(fetch_user)):
     table = ''
+
     try:
         if wishlist_or_library == 'library':
             table = models.Library
+            delete_progress = True
 
         if wishlist_or_library == 'wishlist':
             table = models.Wishlist
@@ -744,3 +747,52 @@ def ratings(user: User = Depends(fetch_user)):
     except:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Error when fetching ratings for user")
+
+async def get_detail_from_id(media_id:str, media_type:str, user:User):  #inefficient, add link_encoded to progress
+
+    if(media_type == 'Book'):
+        link_encoded = db.query(models.Books).filter(models.Books.id == media_id).first().link_encoded
+        detail = await activity_detail('book', link_encoded, user)
+        return detail
+
+    if(media_type == 'Movie'):
+        link_encoded = db.query(models.Movies).filter(models.Movies.id == media_id).first().link_encoded
+        detail = await activity_detail('movie', link_encoded, user)
+        return detail
+
+    if(media_type == 'Game'):
+        link_encoded = db.query(models.Games).filter(models.Games.link == media_id).first().link_encoded
+        detail = await activity_detail('game', link_encoded, user)
+        return detail
+
+
+@app.get('/get_recent_progress')            #inefficient, add link_encoded to progress 
+async def get_recent_progress(user: User = Depends(fetch_user)):
+
+    record_books = db.query(models.Progress_Books).filter(
+        models.Progress_Books.username == user.username).order_by(models.Progress_Books.created_at).all()
+
+    record_movies = db.query(models.Progress_Movies).filter(
+        models.Progress_Movies.username == user.username).order_by(models.Progress_Movies.created_at).all()
+
+    record_games = db.query(models.Progress_Games).filter(
+        models.Progress_Games.username == user.username).order_by(models.Progress_Games.created_at).all()
+
+    sum_of_records = record_books + record_movies + record_games
+
+    for i in range(0, len(sum_of_records)):
+        sum_of_records[i] = sum_of_records[i].__dict__
+
+    sorted_records = sorted(sum_of_records, key=itemgetter('created_at'), reverse=True)
+
+    five_recent = sorted_records[:5]
+    detailed_list = []
+
+    for i in range(0, len(five_recent)):
+
+        media_type = five_recent[i]['media_type']
+        media_id = five_recent[i]['media_id']
+        detail = await get_detail_from_id(media_id, media_type, user)
+        detailed_list.append(detail)
+
+    return detailed_list
