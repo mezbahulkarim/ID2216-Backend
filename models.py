@@ -87,7 +87,7 @@ class Progress_Books(Base):
     pages_read = Column(String)
     username = Column(String)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
-    media_type = Column(String)
+    media_type = Column(String, default = "Book")
 
 
 class Progress_Games(Base):
@@ -100,7 +100,7 @@ class Progress_Games(Base):
     notes = Column(String)
     username = Column(String)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
-    media_type = Column(String)
+    media_type = Column(String, default= "Game")
 
 
 class Progress_Movies(Base):
@@ -113,4 +113,4 @@ class Progress_Movies(Base):
     notes = Column(String)
     username = Column(String)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
-    media_type = Column(String)
+    media_type = Column(String, default = "Movie")

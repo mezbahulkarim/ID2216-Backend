@@ -283,7 +283,7 @@ async def activity_detail(media_type:str, encoded_link: str, user: User = Depend
 
 @app.post('/add_activity')
 async def add_activity(media_type: str, encoded_link: str, wishlist_or_library: str, user: User = Depends(fetch_user)):
-    # try:
+    try:
         table = ''
         add_to_progress = False
 
@@ -432,9 +432,9 @@ async def add_activity(media_type: str, encoded_link: str, wishlist_or_library: 
 
         return {"detail": "OK, Successfully Added Activity to Wishlist or Library"}
     
-    # except: 
-    #     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-    #                                 detail="Error when adding activity to Wishlist or Library")
+    except: 
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                    detail="Error when adding activity to Wishlist or Library")
 
 
 @app.get('/get_all_library_or_wishlist_items')
@@ -455,7 +455,7 @@ async def get_all_library_or_wishlist_items(wishlist_or_library: str, user: User
         table.username == user.username, models.Movies.id == table.media_id).all()
 
     game_records = db.query(models.Games).filter(
-        table.username == user.username, models.Games.link == table.media_id).all()
+        table.username == user.username, models.Games.link_encoded == table.media_id).all()
     
     return book_records + movie_records + game_records
 
