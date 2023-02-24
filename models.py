@@ -1,5 +1,6 @@
+import datetime
 from database import Base
-from sqlalchemy import String, Boolean, Integer, Column, ARRAY, JSON, ForeignKey
+from sqlalchemy import String, Boolean, Integer, Column, ARRAY, JSON, DateTime
 
 
 class User(Base):
@@ -85,7 +86,7 @@ class Progress_Books(Base):
     notes = Column(String)
     pages_read = Column(String)
     username = Column(String)
-    created_at = Column(String)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
     media_type = Column(String)
 
 
@@ -98,7 +99,7 @@ class Progress_Games(Base):
     rating = Column(String)
     notes = Column(String)
     username = Column(String)
-    created_at = Column(String)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
     media_type = Column(String)
 
 
@@ -111,5 +112,5 @@ class Progress_Movies(Base):
     rating = Column(String)
     notes = Column(String)
     username = Column(String)
-    created_at = Column(String)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
     media_type = Column(String)

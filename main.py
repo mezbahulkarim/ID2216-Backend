@@ -17,6 +17,7 @@ import json
 import asyncio
 from typing import Union
 from operator import itemgetter
+from sqlalchemy.sql.functions import current_timestamp
 
 
 db = SessionLocal()
@@ -282,9 +283,9 @@ async def activity_detail(media_type:str, encoded_link: str, user: User = Depend
 
 @app.post('/add_activity')
 async def add_activity(media_type: str, encoded_link: str, wishlist_or_library: str, user: User = Depends(fetch_user)):
-    try:
+    # try:
         table = ''
-        add_to_progress: bool
+        add_to_progress = False
 
         if wishlist_or_library == 'wishlist':
             table = models.Wishlist
@@ -407,14 +408,14 @@ async def add_activity(media_type: str, encoded_link: str, wishlist_or_library: 
                 db.commit()
 
             table_record = table(
-                media_id=game['link'],
+                media_id=game['link_encoded'],
                 media_type="Game",
                 username=user.username
             )
 
             if db.query(table).filter(
                     table.username == user.username,
-                    table.media_id == game['link']).first():
+                    table.media_id == game['link_encoded']).first():
                 raise HTTPException(status_code=status.HTTP_409_CONFLICT,
                                     detail="User already added this game to Wishlist or Library")
 
@@ -424,16 +425,16 @@ async def add_activity(media_type: str, encoded_link: str, wishlist_or_library: 
 
             if add_to_progress:
                 progress_record = models.Progress_Games(
-                    media_id = game['link']
+                    media_id = game['link_encoded']
                 )
                 await update_progress_games(progress_record, user)  
 
 
         return {"detail": "OK, Successfully Added Activity to Wishlist or Library"}
     
-    except: 
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                                    detail="Error when adding activity to Wishlist or Library")
+    # except: 
+    #     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+    #                                 detail="Error when adding activity to Wishlist or Library")
 
 
 @app.get('/get_all_library_or_wishlist_items')
@@ -796,3 +797,6 @@ async def get_recent_progress(user: User = Depends(fetch_user)):
         detailed_list.append(detail)
 
     return detailed_list
+
+
+#encoded link as media_id for progress tables
